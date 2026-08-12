@@ -8,7 +8,7 @@ COGS (HPP) inputs, and computes Laba Rugi (profit & loss) on demand for any
 month.
 
 Part of the `stock-*` multi-repo project. See `CLAUDE.md` for scope and
-sibling-repo relationships. Not yet pushed to GitHub.
+sibling-repo relationships.
 
 ## Tech stack
 
