@@ -1,0 +1,51 @@
+# Local dev only. Runs the FastAPI app + a Postgres instance together.
+# Names are prefixed with `stock_hpp` (container, db, volume) rather than
+# generic names like `postgres`/`db`, specifically so this stack doesn't
+# collide with other local projects' docker resources and is easy to spot
+# in `docker ps` / `docker volume ls`.
+
+services:
+  stock_hpp_postgres:
+    image: postgres:16-alpine
+    container_name: stock_hpp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: stock_hpp_user
+      POSTGRES_PASSWORD: stock_hpp_pass
+      POSTGRES_DB: stock_hpp_db
+    ports:
+      # Exposed on the host too, for connecting a DB GUI during dev.
+      - "5433:5432"
+    volumes:
+      - stock_hpp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stock_hpp_user -d stock_hpp_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  stock_hpp_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stock_hpp_app
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    environment:
+      # Overrides the .env.local DB host (localhost isn't reachable from
+      # inside a container) to point at the compose service name instead.
+      DATABASE_URL: postgresql+psycopg2://stock_hpp_user:stock_hpp_pass@stock_hpp_postgres:5432/stock_hpp_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      stock_hpp_postgres:
+        condition: service_healthy
+    # Run pending migrations, then start the API — keeps "docker compose up"
+    # a single command for local dev instead of a separate migrate step.
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  stock_hpp_pgdata:
+    name: stock_hpp_pgdata
