@@ -1,2 +1,11 @@
+# Shared baseline — kept identical across all stock-* repos, see CLAUDE.md
 .env
+.env.local
 .claude/settings.local.json
+
+# Repo-specific — Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
