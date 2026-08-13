@@ -3,7 +3,7 @@
 # shipped image free of build tooling (gcc, headers) that psycopg2/bcrypt
 # need at install time but not at runtime.
 
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 # psycopg2-binary and bcrypt install pure-C extensions; build-essential +
 # libpq-dev provide the compiler/headers needed during `pip install`.
@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir --upgrade pip \
        /opt/venv/lib/python*/site-packages/pkg_resources
 
 
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 # libpq5 is the runtime-only counterpart of libpq-dev (no compiler needed).
 # pip/setuptools are also stripped from the system Python here -- the app
