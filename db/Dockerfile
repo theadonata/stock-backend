@@ -7,7 +7,7 @@
 # base postgres image's own convention. Only schema-bootstrap scripts that
 # are safe to be public belong in initdb/.
 
-FROM postgres:16-alpine
+FROM postgres:18-alpine
 
 # gosu exists solely so the entrypoint can start as root (to fix directory
 # ownership) and then drop to the "postgres" user before running the actual
