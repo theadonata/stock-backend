@@ -49,7 +49,7 @@ jobs:
           pytest --cov=app --cov-report=xml
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-xml
           path: coverage.xml
@@ -104,7 +104,7 @@ jobs:
       - name: Save image as artifact
         run: docker save ${{ steps.meta.outputs.tag }} -o image.tar
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: backend-image
           path: image.tar
@@ -127,7 +127,7 @@ jobs:
       - name: Save image as artifact
         run: docker save ${{ steps.meta.outputs.tag }} -o db-image.tar
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: backend-db-image
           path: db-image.tar
