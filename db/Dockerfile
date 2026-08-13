@@ -9,6 +9,11 @@
 
 FROM postgres:16-alpine
 
+# The base image tag is floating and its last rebuild can lag behind
+# Alpine's own package patches (same reasoning as stock-frontend's nginx
+# stage), so pull in current package versions at build time.
+RUN apk update && apk upgrade --no-cache
+
 # gosu exists solely so the entrypoint can start as root (to fix directory
 # ownership) and then drop to the "postgres" user before running the actual
 # server. Running as "postgres" from the start skips that step entirely --
