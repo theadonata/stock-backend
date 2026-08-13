@@ -6,7 +6,9 @@
 
 services:
   stock_hpp_postgres:
-    image: postgres:16-alpine
+    build:
+      context: ./db
+      dockerfile: Dockerfile
     container_name: stock_hpp_postgres
     restart: unless-stopped
     environment:
