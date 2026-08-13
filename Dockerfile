@@ -40,9 +40,9 @@ FROM python:3.12-slim AS runtime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/* \
-       /usr/local/lib/python3.12/ensurepip \
-       /usr/local/lib/python3.12/site-packages/pip* \
-       /usr/local/lib/python3.12/site-packages/setuptools* \
+       /usr/local/lib/python*/ensurepip \
+       /usr/local/lib/python*/site-packages/pip* \
+       /usr/local/lib/python*/site-packages/setuptools* \
     && useradd --create-home --uid 1000 appuser
 
 COPY --from=builder /opt/venv /opt/venv
