@@ -1,5 +1,5 @@
 """Inventory ledger: record movements, query current/point-in-time stock."""
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -7,7 +7,11 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.inventory_ledger import InventoryLedger
-from app.schemas.inventory import InventoryMovementCreate, InventoryMovementRead, StockLevelResponse
+from app.schemas.inventory import (
+    InventoryMovementCreate,
+    InventoryMovementRead,
+    StockLevelResponse,
+)
 from app.services.inventory_service import get_stock_as_of, record_movement
 
 router = APIRouter(prefix="/inventory", tags=["inventory"], dependencies=[Depends(get_current_user)])
@@ -32,8 +36,7 @@ def list_movements(product_id: int | None = None, db: Session = Depends(get_db))
 def get_stock(product_id: int, as_of: datetime | None = None, db: Session = Depends(get_db)) -> StockLevelResponse:
     """Current stock if `as_of` is omitted, else stock at that point in
     time — same derivation, just a different upper bound on the sum."""
-    from datetime import timezone
 
-    effective_as_of = as_of or datetime.now(timezone.utc)
+    effective_as_of = as_of or datetime.now(UTC)
     quantity = get_stock_as_of(db, product_id, as_of=effective_as_of)
     return StockLevelResponse(product_id=product_id, as_of=effective_as_of, quantity_on_hand=quantity)

@@ -11,7 +11,7 @@ ledger rows makes stock a pure function of the audit trail: correct by
 construction, and any past snapshot is just the same sum with a tighter
 time filter.
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import case, func
@@ -25,7 +25,7 @@ from app.schemas.inventory import InventoryMovementCreate
 def get_stock_as_of(db: Session, product_id: int, as_of: datetime | None = None) -> float:
     """Sum all ledger movements for a product up to (and including) `as_of`
     (defaults to now), treating IN as +quantity and OUT as -quantity."""
-    as_of = as_of or datetime.now(timezone.utc)
+    as_of = as_of or datetime.now(UTC)
 
     # SQL CASE/WHEN flips the sign based on direction so the database does
     # the arithmetic in one pass instead of pulling every row into Python.
@@ -55,11 +55,11 @@ def record_movement(db: Session, movement_in: InventoryMovementCreate) -> Invent
     if product is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
 
-    timestamp = movement_in.timestamp or datetime.now(timezone.utc)
-    now = datetime.now(timezone.utc)
+    timestamp = movement_in.timestamp or datetime.now(UTC)
+    now = datetime.now(UTC)
     # Normalize naive datetimes (no tzinfo) to UTC before comparing, since a
     # client might send a timestamp without an offset.
-    compare_ts = timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=timezone.utc)
+    compare_ts = timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=UTC)
     if compare_ts > now:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Movement timestamp cannot be in the future"

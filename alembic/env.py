@@ -3,14 +3,15 @@ instead of a hardcoded URL, and enables autogenerate by exposing our
 Base.metadata."""
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
+
+import app.models  # noqa: F401  (import for side effect: registers models)
+from alembic import context
 
 # Import the app's models package so every model is registered on
 # Base.metadata before Alembic compares it against the DB schema.
 from app.core.config import get_settings
 from app.db.base import Base
-import app.models  # noqa: F401  (import for side effect: registers models)
 
 config = context.config
 

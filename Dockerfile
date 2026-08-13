@@ -24,15 +24,25 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir fastapi "uvicorn[standard]" sqlalchemy alembic \
        pydantic pydantic-settings "python-jose[cryptography]" "passlib[bcrypt]" \
-       "bcrypt<4.0.0" psycopg2-binary python-multipart
+       "bcrypt<4.0.0" psycopg2-binary python-multipart \
+    && rm -rf /opt/venv/lib/python*/site-packages/pip* \
+       /opt/venv/lib/python*/site-packages/setuptools* \
+       /opt/venv/lib/python*/site-packages/pkg_resources
 
 
 FROM python:3.12-slim AS runtime
 
 # libpq5 is the runtime-only counterpart of libpq-dev (no compiler needed).
+# pip/setuptools are also stripped from the system Python here -- the app
+# only ever runs uvicorn, never invokes pip, and shipping it just carries
+# forward whatever CVEs pip's vendored deps happen to have at any given
+# moment (see the venv below, which drops its own copy for the same reason).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/* \
+       /usr/local/lib/python3.12/ensurepip \
+       /usr/local/lib/python3.12/site-packages/pip* \
+       /usr/local/lib/python3.12/site-packages/setuptools* \
     && useradd --create-home --uid 1000 appuser
 
 COPY --from=builder /opt/venv /opt/venv

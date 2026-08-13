@@ -6,6 +6,11 @@
       "headers": {
         "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
+    },
+    "sonarqube": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "SONARQUBE_TOKEN", "-e", "SONARQUBE_ORG=theadonata", "mcp/sonarqube"],
+      "env": { "SONARQUBE_TOKEN": "${SONARQUBE_TOKEN}" }
     }
   }
 }

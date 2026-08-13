@@ -1,6 +1,6 @@
 """Sales CRUD, with the same future-dated-entry business rule as inventory
 movements (per spec's error-handling section)."""
-from datetime import date
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/sales", tags=["sales"], dependencies=[Depends(get_cu
 
 
 def _reject_future_date(entry_date: date) -> None:
-    if entry_date > date.today():
+    if entry_date > datetime.now(UTC).date():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Date cannot be in the future")
 
 

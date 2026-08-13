@@ -20,7 +20,7 @@ from app.db.session import SessionLocal
 from app.models.user import User
 
 DEFAULT_USERNAME = "admin"
-DEFAULT_PASSWORD = "changeme123"  # noqa: S105 - placeholder dev credential, documented above
+DEFAULT_PASSWORD = "changeme123"
 
 
 def seed_admin() -> None:

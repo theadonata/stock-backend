@@ -1,5 +1,5 @@
 """Expenses CRUD, same future-dated-entry rule as sales/inventory."""
-from datetime import date
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/expenses", tags=["expenses"], dependencies=[Depends(
 
 
 def _reject_future_date(entry_date: date) -> None:
-    if entry_date > date.today():
+    if entry_date > datetime.now(UTC).date():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Date cannot be in the future")
 
 

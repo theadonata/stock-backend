@@ -4,7 +4,7 @@ Password hashing and JWT issuing/verification.
 Kept separate from the auth API route / service so the low-level crypto
 primitives are easy to unit test and reuse (e.g. from the seed script).
 """
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -35,7 +35,7 @@ def create_access_token(subject: str, expires_delta: timedelta | None = None) ->
     subject since this app has a single role tier and no separate session
     store — the token itself is the full session).
     """
-    expire = datetime.now(timezone.utc) + (
+    expire = datetime.now(UTC) + (
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     to_encode: dict[str, Any] = {"sub": subject, "exp": expire}
