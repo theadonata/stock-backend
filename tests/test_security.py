@@ -33,7 +33,13 @@ def test_access_token_round_trips_the_subject():
 
 def test_decode_access_token_rejects_tampered_token():
     token = create_access_token(subject="alice")
-    tampered = token[:-1] + ("A" if token[-1] != "A" else "B")
+    # Flip a character in the middle, not the last one: base64url's final
+    # character in a segment can carry only padding bits depending on
+    # segment length, so tampering it sometimes decodes to the exact same
+    # bytes -- flakily leaving the token still valid. A middle character is
+    # always fully significant.
+    middle = len(token) // 2
+    tampered = token[:middle] + ("A" if token[middle] != "A" else "B") + token[middle + 1 :]
     assert decode_access_token(tampered) is None
 
 
