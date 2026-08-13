@@ -3,7 +3,7 @@ Tests for the running stock balance derived from the inventory ledger —
 called out in the spec as logic "most likely to be subtly wrong" (sign
 errors, off-by-time-window bugs, stock-below-zero not being caught).
 """
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi import HTTPException
@@ -55,7 +55,7 @@ def test_stock_out_cannot_exceed_current_stock(db_session):
 
 def test_future_dated_movement_is_rejected(db_session):
     product = _make_product(db_session)
-    future_ts = datetime.now(timezone.utc) + timedelta(days=1)
+    future_ts = datetime.now(UTC) + timedelta(days=1)
     with pytest.raises(HTTPException) as exc_info:
         record_movement(
             db_session,
@@ -70,7 +70,7 @@ def test_point_in_time_stock_ignores_later_movements(db_session):
     """Historical stock snapshot: summing up to a past timestamp should not
     include movements recorded after that point."""
     product = _make_product(db_session)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     earlier = now - timedelta(days=5)
 
     record_movement(

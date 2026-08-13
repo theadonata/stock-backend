@@ -11,7 +11,7 @@ double-applied, or reordered — and it lets us answer "what was stock on
 requirement for historical point-in-time stock snapshots.
 """
 import enum
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -42,7 +42,7 @@ class InventoryLedger(Base):
         nullable=False,
     )
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), index=True
     )
     note: Mapped[str | None] = mapped_column(String(500), nullable=True)
 

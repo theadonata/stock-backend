@@ -1,7 +1,7 @@
 """User model — backs auth only. Single role tier (no is_admin/role column
 yet); the spec explicitly leaves room to add role distinctions later
 without restructuring this table."""
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -18,5 +18,5 @@ class User(Base):
     # app.core.security.hash_password.
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
