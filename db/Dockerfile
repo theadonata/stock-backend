@@ -7,7 +7,7 @@
 # base postgres image's own convention. Only schema-bootstrap scripts that
 # are safe to be public belong in initdb/.
 
-FROM postgres:16-alpine
+FROM postgres:18-alpine
 
 # The base image tag is floating and its last rebuild can lag behind
 # Alpine's own package patches (same reasoning as stock-frontend's nginx
