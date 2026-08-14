@@ -108,7 +108,7 @@ jobs:
         run: docker build -t ${{ steps.meta.outputs.tag }} -t ${{ steps.meta.outputs.dev_tag }} -t ${{ steps.meta.outputs.staging_tag }} .
 
       - name: Save image as artifact
-        run: docker save ${{ steps.meta.outputs.tag }} -o image.tar
+        run: docker save ${{ steps.meta.outputs.tag }} ${{ steps.meta.outputs.dev_tag }} ${{ steps.meta.outputs.staging_tag }} -o image.tar
 
       - uses: actions/upload-artifact@v7
         with:
@@ -136,7 +136,7 @@ jobs:
         run: docker build -t ${{ steps.meta.outputs.tag }} -t ${{ steps.meta.outputs.dev_tag }} -t ${{ steps.meta.outputs.staging_tag }} ./db
 
       - name: Save image as artifact
-        run: docker save ${{ steps.meta.outputs.tag }} -o db-image.tar
+        run: docker save ${{ steps.meta.outputs.tag }} ${{ steps.meta.outputs.dev_tag }} ${{ steps.meta.outputs.staging_tag }} -o db-image.tar
 
       - uses: actions/upload-artifact@v7
         with:
