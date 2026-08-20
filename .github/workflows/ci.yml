@@ -267,3 +267,35 @@ jobs:
           docker push ${{ needs.build-db-image.outputs.image-tag }}
           docker push ${{ needs.build-db-image.outputs.dev-tag }}
           docker push ${{ needs.build-db-image.outputs.staging-tag }}
+
+  # Both the app image and the db image are built from this same commit and
+  # must move together, so one bump job updates both fields in one PR — see
+  # stock-infrastructure's CONTEXT.md "stock-backend-db image" entry for why
+  # .postgres.image.tag belongs here despite the name.
+  bump-dev:
+    name: Bump dev image tag
+    needs: [push-image, push-db-image]
+    if: github.event_name == 'push'
+    uses: theadonata/stock-infrastructure/.github/workflows/bump-values.yml@main
+    with:
+      environment: dev
+      app_label: backend
+      image_tag: ${{ github.sha }}
+      yq_paths: ".backend.image.tag .postgres.image.tag"
+      auto_merge: true
+    secrets:
+      infra_repo_pat: ${{ secrets.INFRA_REPO_PAT }}
+
+  bump-staging:
+    name: Bump staging image tag
+    needs: [push-image, push-db-image]
+    if: github.event_name == 'push'
+    uses: theadonata/stock-infrastructure/.github/workflows/bump-values.yml@main
+    with:
+      environment: staging
+      app_label: backend
+      image_tag: ${{ github.sha }}
+      yq_paths: ".backend.image.tag .postgres.image.tag"
+      auto_merge: false
+    secrets:
+      infra_repo_pat: ${{ secrets.INFRA_REPO_PAT }}
