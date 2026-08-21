@@ -37,7 +37,11 @@ FROM python:3.14-slim AS runtime
 # only ever runs uvicorn, never invokes pip, and shipping it just carries
 # forward whatever CVEs pip's vendored deps happen to have at any given
 # moment (see the venv below, which drops its own copy for the same reason).
+# `apt-get upgrade` pulls in security patches Debian has released for
+# packages already baked into the base image (e.g. util-linux) -- `update`
+# alone only refreshes the package index, it doesn't apply them.
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/* \
        /usr/local/lib/python*/ensurepip \
