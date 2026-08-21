@@ -300,3 +300,4 @@ jobs:
     secrets:
       infra_repo_pat: ${{ secrets.INFRA_REPO_PAT }}
 # retrigger CI
+# retrigger: pull in stock-infrastructure bump-values.yml fix (2026-08-21T03:49:33Z)
