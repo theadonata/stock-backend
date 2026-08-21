@@ -296,7 +296,7 @@ jobs:
       app_label: backend
       image_tag: ${{ github.sha }}
       yq_paths: ".backend.image.tag .postgres.image.tag"
-      auto_merge: false
+      auto_merge: true
     secrets:
       infra_repo_pat: ${{ secrets.INFRA_REPO_PAT }}
 # retrigger CI
