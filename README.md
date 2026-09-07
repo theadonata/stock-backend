@@ -1,127 +1,116 @@
 # stock-backend
 
-API, business logic, and data layer for the Stock/HPP business-finance app —
-a small internal tool that replaces an Excel-based tracker
-(`Catatan_HPP_Keuangan_Bisnis.xlsx`) for a small bags/accessories business.
-It tracks products, inventory movements, sales, operational expenses, and
-COGS (HPP) inputs, and computes Laba Rugi (profit & loss) on demand for any
-month.
+> The API and database behind a small business's sales & inventory tracker.
 
-Part of the `stock-*` multi-repo project. See `CLAUDE.md` for scope and
-sibling-repo relationships.
+## About the project
 
-## Tech stack
+A small bags & accessories business used to track everything — sales,
+stock, expenses, and cost of goods sold — in a single Excel file
+(`Catatan_HPP_Keuangan_Bisnis.xlsx`). **Stock/HPP** ("HPP" is Indonesian
+for *Harga Pokok Penjualan*, i.e. Cost of Goods Sold) replaces that
+spreadsheet with a proper web app.
 
-- **FastAPI** — REST API, versioned under `/api/v1`, with OpenAPI docs
-  auto-generated at `/docs` (the API contract for `stock-frontend` /
-  `stock-qa`).
-- **PostgreSQL** + **SQLAlchemy** (ORM) + **Alembic** (migrations).
-- **JWT auth** (python-jose) with **bcrypt** password hashing (passlib) —
-  single role tier, every authenticated user can read/write.
-- **pytest** + **httpx** for tests.
-- Packaged as a **multi-stage Docker image**; local dev runs via
-  **docker-compose** (app + Postgres).
+**This repo is the engine room.** It's the REST API and database that
+store every product, sale, stock movement, and expense, and that compute
+profit & loss (Laba Rugi) on demand. The web page people actually click
+around in lives in a separate repo, [stock-frontend](https://github.com/theadonata/stock-frontend) — it talks to this API over HTTP and never touches this repo's code or database directly.
 
-## Data model
+### Part of a bigger project
 
-- `users` — auth only (username, hashed password).
-- `products` — catalog: name, unit, purchase price per unit.
-- `inventory_ledger` — one row per stock movement (in/out). Current stock
-  and historical snapshots are both *derived* by summing this ledger —
-  there is no stored "current stock" column, so stock can never silently
-  drift from its audit trail.
-- `sales` — revenue entries (source/product, date, amount).
-- `expenses` — operational cost entries (category, date, amount).
-- `cogs_components` — per-month HPP inputs (persediaan awal/akhir,
-  pembelian bahan baku, ongkos kirim, biaya tenaga kerja, overhead, kemasan).
-- **Laba Rugi (P&L) is not a stored table.** `GET /api/v1/reports/pnl` computes
-  it on the fly from sales + cogs_components + expenses for a given period.
+Stock/HPP is split into six repos, each one buildable and deployable on
+its own:
 
-`products`, `sales`, `expenses`, and `cogs_components` all support full CRUD
-(list/create/get/update/delete). `inventory_ledger` is deliberately
-**append-only** — create and list only, no update/delete — since it's an
-audit trail; editing a past movement would let recorded stock silently
-drift from reality, which the ledger design exists to prevent.
+| Repo | What it does |
+|---|---|
+| [stock-frontend](https://github.com/theadonata/stock-frontend) | The web app people use day to day |
+| **stock-backend** (this repo) | The API and database — stores data, does the math |
+| [stock-infrastructure](https://github.com/theadonata/stock-infrastructure) | Deploys and runs everything on a server |
+| [stock-qa](https://github.com/theadonata/stock-qa) | Automated tests that check everything works |
+| [stock-business-analyst](https://github.com/theadonata/stock-business-analyst) | The original business requirements this is built from |
+| [stock-platform](https://github.com/theadonata/stock-platform) | An internal dashboard for the team building this project |
 
-## Running locally via Docker
+## What it tracks
 
-Prerequisites: Docker + Docker Compose.
+- **Products** — name, unit, purchase price
+- **Inventory movements** — every stock-in / stock-out event. Current
+  stock is always calculated from this history, never stored as its own
+  number — so it can never quietly drift from reality.
+- **Sales** and **expenses** — simple dated entries
+- **COGS inputs** — the monthly numbers (opening/closing stock, materials
+  purchased, shipping, labor, overhead, packaging) that feed into...
+- **Profit & Loss** — not stored anywhere; calculated fresh every time you
+  ask for it, for whatever month/period you pick
 
-1. **Start the stack** (builds the app image, starts Postgres, runs
-   migrations, then starts the API):
+Everything above supports the usual create/read/update/delete operations
+*except* inventory movements, which are append-only on purpose — it's an
+audit trail, so past entries can't be edited or deleted.
 
-   ```bash
-   docker compose up --build
-   ```
+## Built with
 
-   This uses `docker-compose.yml`, which reads config from `.env.local`
-   (gitignored, never committed — see that file for what each variable
-   does and edit the placeholder values there directly; there is no
-   separate `.env.example` to copy from).
+- [FastAPI](https://fastapi.tiangolo.com/) — the web framework, with
+  interactive API docs generated automatically
+- [PostgreSQL](https://www.postgresql.org/) + [SQLAlchemy](https://www.sqlalchemy.org/) (database + ORM) + [Alembic](https://alembic.sqlalchemy.org/) (migrations)
+- JWT-based login (one shared role for now — anyone logged in can read/write)
+- [pytest](https://docs.pytest.org/) for tests
+- Docker + Docker Compose for local development
 
-   Postgres runs as `stock_hpp_postgres` (db `stock_hpp_db`, volume
-   `stock_hpp_pgdata`) — named distinctively so it won't collide with other
-   local projects' `postgres`/`db` containers.
+## Getting started
 
-2. **Migrations** run automatically as part of `docker compose up` (see the
-   `command:` in `docker-compose.yml`). To run them manually instead:
+### Prerequisites
 
-   ```bash
-   docker compose exec stock_hpp_app alembic upgrade head
-   ```
+- [Docker](https://www.docker.com/) and Docker Compose
 
-3. **Seed the placeholder admin login** (one-time, after migrations):
+### Running it
 
-   ```bash
-   docker compose exec stock_hpp_app python -m scripts.seed_admin
-   ```
+```bash
+docker compose up --build
+```
 
-   This creates a single admin user for logging in on a fresh database.
-   Credentials come from `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD` env
-   vars, defaulting to **username `admin`, password `changeme123`** — see
-   `scripts/seed_admin.py`. There is no public self-registration endpoint;
-   this script is the only way accounts get created. Change this password
-   (or provision a real account and stop using this one) before any real
-   deployment.
+This builds the app, starts a Postgres database, runs database migrations,
+then starts the API — all in one command. Configuration comes from
+`.env.local` (already in the repo, gitignored — open it and edit values
+directly, there's no separate example file to copy from).
 
-4. **API docs**: once running, the app is at `http://localhost:8000`, with
-   interactive OpenAPI docs at **`http://localhost:8000/docs`**. Use the
-   "Authorize" button there with a bearer token obtained from
-   `POST /api/v1/auth/login`.
+Once it's running:
 
-5. **Health check**: `GET http://localhost:8000/healthz`.
+- The API is at **http://localhost:8000**
+- Interactive docs (try out every endpoint from your browser) are at
+  **http://localhost:8000/docs**
+- A basic health check is at **http://localhost:8000/healthz**
+
+There's no public sign-up — create the one seed admin account after your
+first migration:
+
+```bash
+docker compose exec stock_hpp_app python -m scripts.seed_admin
+```
+
+Defaults to username `admin`, password `changeme123` (configurable via
+`SEED_ADMIN_USERNAME`/`SEED_ADMIN_PASSWORD`) — change this before any real
+deployment.
 
 ## Running tests
 
-Tests use an in-memory SQLite DB (no Postgres/Docker required) and focus on
-the business logic most likely to be subtly wrong: running stock balance
-from the ledger, the COGS formula, and P&L aggregation across periods.
-
-Outside Docker, with a local Python 3.12 environment:
+Tests run against an in-memory database, so you don't need Postgres or
+Docker for this:
 
 ```bash
 pip install -e ".[dev]"
 pytest
 ```
 
-Or inside the built image:
-
-```bash
-docker compose run --rm stock_hpp_app pip install -e ".[dev]" && pytest
-```
-
-## Project layout
+## Project structure
 
 ```
 app/
-  main.py            FastAPI app + router registration
-  core/               config (pydantic-settings) + security (hashing/JWT)
-  db/                 SQLAlchemy engine/session setup
-  models/             SQLAlchemy ORM models
-  schemas/            Pydantic request/response models
-  api/v1/              routers (auth, products, inventory, sales, expenses, cogs, reports)
-  services/            business logic (auth, inventory ledger math, P&L)
-alembic/               migrations
-scripts/seed_admin.py  one-time placeholder admin seed
-tests/                 pytest suite
+  main.py       FastAPI app + router registration
+  core/         configuration + password hashing/JWT
+  db/           database connection setup
+  models/       database tables (SQLAlchemy)
+  schemas/      request/response shapes (Pydantic)
+  api/v1/       one file per group of endpoints
+  services/     the actual business logic (stock math, P&L calculation)
+alembic/        database migrations
+scripts/        one-off scripts (e.g. seeding the admin account)
+tests/          the test suite
 ```
